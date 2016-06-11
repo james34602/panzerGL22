@@ -4,7 +4,8 @@
 3. Anti-Flash
 4. Anti-Smoke
 5. ESP
-6. More and more...
+6. Menu(Show text)
+7. More and more...
 
 #Development
 Build it with Visual Studio 6.0, and test it, try to look at some features you want, and add something in opengl32.cpp
