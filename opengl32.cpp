@@ -31,7 +31,6 @@
 #include <Winbase.h>
 #include <Stdlib.h>
 #include "vars.h"	// containing all variables and cvars used by the hack
-
 // used structs
 player_s	player;		// player coords, vectors, height, ...
 cvar_s		cvar;		// cvars
@@ -42,14 +41,13 @@ team_s		team[2];	// containing all vertcounts and team defs
 
 GLuint base; // for bitmap font
 HDC hDC;
-
 void CountOffset();		// get the number of added offsets
 void SetOffset(int x);	// set offset for aiming
 void SetOffsetNames();	// sets offsets names (cuz they consist of 5 parts/words)
 void UnvalidVertex();	// turn all vert counts invalid
 int GetVertexMin();		// get lowest vert count
 int GetVertexMax();		// get highest vert count
-
+float curcolor[4];
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -218,23 +216,6 @@ int change(int a) // basic function to toggle things on (1) and off (0)
 	else if(a==1) { b=0; }
 	return b;
 }
-
-/*
-float ChangeCvarFloat(float cvarF,float min,float max,float step)
-{
-	cvarF+=step;
-	if(cvarF>max) { cvarF=min; }
-	else if(cvarF<min) { cvarF=max; }
-	return cvarF;
-}
-
-int ChangeCvarInt(int cvarI,int min,int max,int step)
-{
-	cvarI+=step;
-	if(cvarI>max) { cvarI=min; }
-	else if(cvarI<min) { cvarI=max; }
-	return cvarI;
-}*/
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 void CountOffset()
@@ -771,16 +752,23 @@ void DrawMenu(int x, int y)  // maybe a struct would have been easier but when i
 		if(menu.select)
 		{
 			menu.select=false;
-			cvar.wall=change(cvar.wall);
+			if(menu.select_r)
+			{
+				cvar.wall+=1;
+				menu.select_r=false;
+			}
+			else if(menu.select_l)
+			{
+				cvar.wall-=1;
+				menu.select_l=false;
+			}
+			if(cvar.wall>3) { cvar.wall=0; }
+			else if(cvar.wall<0) { cvar.wall=3; }
 		}
-		if(cvar.wall) { DrawText(x,y+124,1.0f,1.0f,1.0f,"Wallhack: On"); }
-		else if(!cvar.wall) { DrawText(x,y+124,1.0f,1.0f,1.0f,"Wallhack: Off"); }
+		DrawText(x,y+124,1.0f,1.0f,1.0f,"Wallhack: %i",cvar.wall);
 	}
 	else if(menu.count!=9)
-	{
-		if(cvar.wall) { DrawText(x,y+124,0.7f,0.7f,1.0f,"Wallhack: On"); }
-		else if(!cvar.wall) { DrawText(x,y+124,0.7f,0.7f,1.0f,"Wallhack: Off"); }
-	}
+	DrawText(x,y+124,0.7f,0.7f,1.0f,"Wallhack: %i",cvar.wall);
 
 	if(menu.count==10)
 	{
@@ -1198,10 +1186,25 @@ void sys_glAlphaFunc (GLenum func,  GLclampf ref)
 void sys_glBegin (GLenum mode)
 {
 	if ((cvar.wall==1) && (bWall) && (mode==GL_TRIANGLE_FAN || mode==GL_TRIANGLE_STRIP))
+	{
 		(*orig_glDisable)(GL_DEPTH_TEST);
-	else if(hookactive) // avoid fucking up steam and its windows
-		(*orig_glEnable)(GL_DEPTH_TEST);
-
+	}
+	else if((cvar.wall==2) && (bWall))
+	{
+		(*orig_glGetFloatv)(GL_CURRENT_COLOR, curcolor);
+		(*orig_glDisable)(GL_DEPTH_TEST);
+		(*orig_glEnable)(GL_BLEND);
+		(*orig_glBlendFunc)(GL_SRC_ALPHA, GL_ONE);
+		(*orig_glColor4f)(curcolor[0], curcolor[1], curcolor[2], 255.0);
+	}
+	else if((cvar.wall==3) && (bWall))
+	{
+		(*orig_glGetFloatv)(GL_CURRENT_COLOR, curcolor);
+		(*orig_glDisable)(GL_DEPTH_TEST);
+		(*orig_glEnable)(GL_BLEND);
+		(*orig_glBlendFunc)(GL_SRC_ALPHA, GL_SRC_ALPHA_SATURATE);
+		(*orig_glColor4f)(curcolor[0], curcolor[1], curcolor[2], 1.0);
+	}
 	if (mode==GL_QUADS)
 	{
 		bSky=true;
