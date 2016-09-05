@@ -1,5 +1,5 @@
 # panzerGL2.2 Hack
-1. WallHack
+1. 3 WallHack mode
 2. Aimbot
 3. Anti-Flash
 4. Anti-Smoke
